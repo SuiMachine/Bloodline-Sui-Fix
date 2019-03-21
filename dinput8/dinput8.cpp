@@ -39,19 +39,19 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		GetModuleFileNameA(hm, path, sizeof(path));
 		*strrchr(path, '\\') = '\0';
 		strcat_s(path, "\\dinput8.ini");
+		CIniReader configReader(path);
 
 		//Load info from ini
-		bWidth = GetPrivateProfileInt("MAIN", "Width", 0, path);
-		bHeight = GetPrivateProfileInt("MAIN", "Height", 0, path);
+		bWidth = configReader.ReadInteger("MAIN", "Width", 0);
+		bHeight = configReader.ReadInteger("MAIN", "Height", 0);
 		if (bWidth == 0 || bHeight == 0)
 		{
 			bWidth = 1024;
 			bHeight = 768;
 		}
-		bool supressDisplaySettingsChange = GetPrivateProfileInt("MAIN", "SuppressChangeDisplaySettings", 0, path) == 1;
+		bool supressDisplaySettingsChange = configReader.ReadInteger("MAIN", "SuppressChangeDisplaySettings", 0) == 1;
 
-		char loadAdditionalDLLName[255];
-		DWORD lenghtWhateverLibary = GetPrivateProfileString("MAIN", "LoadDll", "", loadAdditionalDLLName, 254, path);
+		std::string loadAdditionalDLLName = configReader.ReadString("MAIN", "LoadDll", "");
 		
 		//Get dll from Windows directory
 		GetSystemDirectory(path, MAX_PATH);
@@ -84,7 +84,7 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		//LoadLibary
 		if (SuiString_EndsWith(loadAdditionalDLLName, ".dll"))
 		{
-			LoadLibraryA(loadAdditionalDLLName);
+			LoadLibraryA(loadAdditionalDLLName.c_str());
 		}
 
 		break;

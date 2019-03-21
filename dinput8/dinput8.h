@@ -7,6 +7,7 @@
 #include <cstring>
 #include <cmath>  
 #include <algorithm>
+#include "inireader/IniReader.h"
 
 #include "sui_stringOperationsSimplification.h"
 #include "hookFunctions.h"

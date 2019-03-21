@@ -20,15 +20,3 @@ static bool SuiString_EndsWith(std::string source, std::string endsWith)
 	else
 		return false;
 }
-
-static float GetPrivateProfileFloat(char* lpAppName, char* lpKeyName, float defaultValue, char* lpFileName)
-{
-	char strValue[255];
-	char floatAsCharArray[64];
-	int ret = snprintf(floatAsCharArray, 64, "%f", defaultValue);
-	if (ret < 0)
-		return defaultValue;
-
-	DWORD LenghtWhatever = GetPrivateProfileString(lpAppName, lpKeyName, floatAsCharArray, strValue, 254, lpFileName);
-	return (float)std::atof(strValue);
-}
