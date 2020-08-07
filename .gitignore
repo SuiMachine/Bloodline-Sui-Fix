@@ -41,3 +41,7 @@ dinput8/Release
 *.zip
 *.7z
 *.rar
+
+# No 7zip
+Release/7za.exe
+
