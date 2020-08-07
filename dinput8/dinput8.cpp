@@ -6,6 +6,7 @@ int bWidth = 1024;
 int bHeight = 768;
 
 HMODULE baseModule;
+char CurrentGameDir[MAX_PATH];
 
 static HWND (__stdcall *TrueWindowFromPoint)(POINT Point) = WindowFromPoint;
 HWND DetourWindowFromPoint(POINT Point)
@@ -18,6 +19,17 @@ LONG DetourChangeDisplaySettings(DEVMODE* lpDevMode, DWORD dwFlags)
 {
 	return DISP_CHANGE_SUCCESSFUL;
 }
+
+static BOOL(__stdcall* TrueCreateDirectoryA)(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes) = CreateDirectoryA;
+BOOL DetourCreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+	if (strstr(lpPathName, CurrentGameDir))
+	{
+		TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
+	}
+	return TRUE;
+}
+
 
 //Dll Main
 bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
@@ -32,6 +44,7 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)"dinput8.dll", &hm);
 		GetModuleFileNameA(hm, path, sizeof(path));
 		*strrchr(path, '\\') = '\0';
+		strcpy_s(CurrentGameDir, MAX_PATH, path);
 		strcat_s(path, "\\dinput8.ini");
 		CIniReader configReader(path);
 
@@ -70,6 +83,7 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 		DetourAttach(&(PVOID&)TrueWindowFromPoint, DetourWindowFromPoint);
+		DetourAttach(&(PVOID&)TrueCreateDirectoryA, DetourCreateDirectoryA);
 		if (configReader.ReadBoolean("MAIN", "SuppressChangeDisplaySettings", false))
 			DetourAttach(&(PVOID&)TrueChangeDisplaySettings, DetourChangeDisplaySettings);
 		DetourTransactionCommit();
