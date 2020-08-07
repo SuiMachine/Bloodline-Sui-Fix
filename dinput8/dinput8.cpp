@@ -27,6 +27,10 @@ BOOL DetourCreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityA
 	{
 		TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
 	}
+	else if (strstr(lpPathName, "temp") || strstr(lpPathName, "save"))
+	{
+		TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
+	}
 	return TRUE;
 }
 
