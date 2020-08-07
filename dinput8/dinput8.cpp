@@ -1,4 +1,5 @@
 #include "dinput8.h"
+#include <detours.h>
 
 //Global Variables
 int bWidth = 1024;
@@ -6,23 +7,16 @@ int bHeight = 768;
 
 HMODULE baseModule;
 
-HWND fixedWindowHandle = NULL;
-DWORD fixCreateWindowHandleReturn;
-
-void __declspec(naked) fixWindowHandle()
+static HWND (__stdcall *TrueWindowFromPoint)(POINT Point) = WindowFromPoint;
+HWND DetourWindowFromPoint(POINT Point)
 {
-	__asm
-	{
-		push ebp
-	}
-	fixedWindowHandle = CreateWindowEx(0x0, "Editor", "Bloodlines", 0x0, 0, 0, bWidth, bHeight, NULL, NULL, NULL, NULL);
-	__asm
-	{
-		pop ebp
-		mov eax, fixedWindowHandle
-		mov [ebp+0x24],eax
-		jmp[fixCreateWindowHandleReturn]
-	}
+	return CreateWindowEx(0x0, "Editor", "Bloodline", WS_BORDER, 0, 0, bWidth, bHeight, NULL, NULL, NULL, NULL);
+}
+
+static LONG(__stdcall* TrueChangeDisplaySettings)(DEVMODE* lpDevMode, DWORD dwFlags) = ChangeDisplaySettings;
+LONG DetourChangeDisplaySettings(DEVMODE* lpDevMode, DWORD dwFlags)
+{
+	return DISP_CHANGE_SUCCESSFUL;
 }
 
 //Dll Main
@@ -42,14 +36,13 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		CIniReader configReader(path);
 
 		//Load info from ini
-		bWidth = configReader.ReadInteger("MAIN", "Width", 0);
-		bHeight = configReader.ReadInteger("MAIN", "Height", 0);
-		if (bWidth == 0 || bHeight == 0)
+		bWidth = configReader.ReadInteger("MAIN", "Width", 640);
+		bHeight = configReader.ReadInteger("MAIN", "Height", 480);
+		if (bWidth < 0 || bHeight < 0)
 		{
 			bWidth = 1024;
 			bHeight = 768;
 		}
-		bool supressDisplaySettingsChange = configReader.ReadInteger("MAIN", "SuppressChangeDisplaySettings", 0) == 1;
 
 		std::string loadAdditionalDLLName = configReader.ReadString("MAIN", "LoadDll", "");
 		
@@ -69,17 +62,17 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		baseModule = GetModuleHandle(NULL);
 		UnprotectModule(baseModule);
 
-		if (supressDisplaySettingsChange)
-		{
-			memset((void*)((DWORD)baseModule + 0x17116), 0x90, 0x1E);
-		}
-
 		float aspectRatio = bWidth * 1.0f / bHeight;
 		*(float*)((DWORD)baseModule + 0xF78C) = aspectRatio;
 		*(float*)((DWORD)baseModule + 0x11F76) = aspectRatio;
 
 		//Window Create Fix
-		Hook((DWORD)baseModule + 0x09015, fixWindowHandle, &fixCreateWindowHandleReturn, 0xA);
+		DetourTransactionBegin();
+		DetourUpdateThread(GetCurrentThread());
+		DetourAttach(&(PVOID&)TrueWindowFromPoint, DetourWindowFromPoint);
+		if (configReader.ReadBoolean("MAIN", "SuppressChangeDisplaySettings", false))
+			DetourAttach(&(PVOID&)TrueChangeDisplaySettings, DetourChangeDisplaySettings);
+		DetourTransactionCommit();
 
 		//LoadLibary
 		if (SuiString_EndsWith(loadAdditionalDLLName, ".dll"))
