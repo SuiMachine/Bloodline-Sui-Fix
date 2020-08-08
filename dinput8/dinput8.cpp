@@ -25,11 +25,11 @@ BOOL DetourCreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityA
 {
 	if (strstr(lpPathName, CurrentGameDir))
 	{
-		TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
+		return TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
 	}
 	else if (strstr(lpPathName, "temp") || strstr(lpPathName, "save"))
 	{
-		TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
+		return TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
 	}
 	return TRUE;
 }
@@ -87,7 +87,8 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 		DetourAttach(&(PVOID&)TrueWindowFromPoint, DetourWindowFromPoint);
-		DetourAttach(&(PVOID&)TrueCreateDirectoryA, DetourCreateDirectoryA);
+		if (configReader.ReadBoolean("MAIN", "RestrictFolderCreation", true))
+			DetourAttach(&(PVOID&)TrueCreateDirectoryA, DetourCreateDirectoryA);
 		if (configReader.ReadBoolean("MAIN", "SuppressChangeDisplaySettings", false))
 			DetourAttach(&(PVOID&)TrueChangeDisplaySettings, DetourChangeDisplaySettings);
 		DetourTransactionCommit();
