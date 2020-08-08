@@ -23,6 +23,8 @@ LONG DetourChangeDisplaySettings(DEVMODE* lpDevMode, DWORD dwFlags)
 static BOOL(__stdcall* TrueCreateDirectoryA)(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes) = CreateDirectoryA;
 BOOL DetourCreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
+	auto result = strstr(lpPathName, CurrentGameDir);
+
 	if (strstr(lpPathName, CurrentGameDir))
 	{
 		return TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
@@ -49,6 +51,7 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		GetModuleFileNameA(hm, path, sizeof(path));
 		*strrchr(path, '\\') = '\0';
 		strcpy_s(CurrentGameDir, MAX_PATH, path);
+		strcat_s(CurrentGameDir, MAX_PATH, "\\");
 		strcat_s(path, "\\dinput8.ini");
 		CIniReader configReader(path);
 
