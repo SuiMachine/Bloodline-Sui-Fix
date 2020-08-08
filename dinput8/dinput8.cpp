@@ -6,8 +6,9 @@ int bWidth = 1024;
 int bHeight = 768;
 
 HMODULE baseModule;
-char CurrentGameDir[MAX_PATH];
 
+
+#pragma region DetoursForDisplay
 static HWND (__stdcall *TrueWindowFromPoint)(POINT Point) = WindowFromPoint;
 HWND DetourWindowFromPoint(POINT Point)
 {
@@ -19,22 +20,63 @@ LONG DetourChangeDisplaySettings(DEVMODE* lpDevMode, DWORD dwFlags)
 {
 	return DISP_CHANGE_SUCCESSFUL;
 }
+#pragma endregion
+
+#pragma region FilePathDetours
+char CurrentGameDir[MAX_PATH];
+
+//Oh no, bad words as function names... Reeeeeeeeee
+BOOL fixRetardedPaths(LPCSTR PotentiallyWrongPath)
+{
+	const char tempDir[] = "temp";
+	const char saveDir[] = "save";
+
+
+	if (strstr(PotentiallyWrongPath, CurrentGameDir) || strstr(PotentiallyWrongPath, tempDir) || strstr(PotentiallyWrongPath, saveDir))
+	{
+		return TRUE;
+	}
+
+	auto lenght = strlen(PotentiallyWrongPath);
+
+	//Basically is a drive - probably other ways to do it -- do not try creating, deleting, opening etc. this happens in this game NotLikeThis
+	if (lenght == 2 && PotentiallyWrongPath[1] == ':')
+	{
+		return FALSE;
+	}
+
+	if (lenght >= 3)
+	{
+		if (PotentiallyWrongPath[1] == ':' && PotentiallyWrongPath[2] == '\\')
+		{
+			if (strstr(PotentiallyWrongPath, "C:\\Program Files"))
+			{
+				auto dumbHardcodedPath = "C:\\Program Files\\Techland\\Bloodline\\";
+				if (strstr(PotentiallyWrongPath, dumbHardcodedPath ))
+				{
+					auto dumbHardcodedPathLenght = strlen(dumbHardcodedPath);
+					strcpy_s((char*)PotentiallyWrongPath, lenght, &PotentiallyWrongPath[dumbHardcodedPathLenght]);
+					return TRUE;
+				}
+				else
+					return FALSE;
+			}
+		}
+		return FALSE;
+	}
+	return TRUE;
+}
 
 static BOOL(__stdcall* TrueCreateDirectoryA)(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes) = CreateDirectoryA;
 BOOL DetourCreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	auto result = strstr(lpPathName, CurrentGameDir);
-
-	if (strstr(lpPathName, CurrentGameDir))
-	{
-		return TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
-	}
-	else if (strstr(lpPathName, "temp") || strstr(lpPathName, "save"))
+	if (fixRetardedPaths(lpPathName))
 	{
 		return TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
 	}
 	return TRUE;
 }
+#pragma endregion
 
 
 //Dll Main
