@@ -34,19 +34,19 @@
     <ProjectGuid>{53FB14D2-A363-4842-A53C-B573138A76E3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>dinput8</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -83,17 +83,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>C:\Softplanet\Bloodline</OutDir>
-    <IncludePath>..\externals;D:\Projekty\__liberies\Detours-4.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Projekty\__liberies\Detours-4.0.1\lib.X86;$(LibraryPath)</LibraryPath>
+    <OutDir>G:\Softplanet\Bloodline</OutDir>
+    <IncludePath>..\externals;E:\Projekty\__liberies\Detours-4.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Projekty\__liberies\Detours-4.0.1\lib.X86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\externals;D:\Projekty\__liberies\Detours-4.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Projekty\__liberies\Detours-4.0.1\lib.X86;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\externals;E:\Projekty\__liberies\Detours-4.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Projekty\__liberies\Detours-4.0.1\lib.X86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

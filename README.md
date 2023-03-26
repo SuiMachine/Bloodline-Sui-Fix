@@ -10,7 +10,8 @@ Requirements
 Notes
 ----
 * Tested only with Polish release of the game.
-* Do not use "**RestrictFolderCreation**" option in combination with "**Unofficial patch**" for the game. 
+* Do not use "**RestrictFolderCreation**" option in combination with "**Unofficial patch**" for the game.
+* If the game crashes - try disabling "**RestrictFolderCreation**" or "**SuppressChangeDisplaySettings**".
 
 Warning
 ----
