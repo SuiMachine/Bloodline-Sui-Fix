@@ -1,5 +1,6 @@
 #include "dinput8.h"
 #include <detours.h>
+#include "FixPaths.h"
 
 //Global Variables
 int bWidth = 1024;
@@ -25,57 +26,7 @@ LONG DetourChangeDisplaySettings(DEVMODE* lpDevMode, DWORD dwFlags)
 #pragma region FilePathDetours
 char CurrentGameDir[MAX_PATH];
 
-//Oh no, bad words as function names... Reeeeeeeeee
-BOOL fixRetardedPaths(LPCSTR PotentiallyWrongPath)
-{
-	const char tempDir[] = "temp";
-	const char saveDir[] = "save";
 
-
-	if (strstr(PotentiallyWrongPath, CurrentGameDir) || strstr(PotentiallyWrongPath, tempDir) || strstr(PotentiallyWrongPath, saveDir))
-	{
-		return TRUE;
-	}
-
-	auto lenght = strlen(PotentiallyWrongPath);
-
-	//Basically is a drive - probably other ways to do it -- do not try creating, deleting, opening etc. this happens in this game NotLikeThis
-	if (lenght == 2 && PotentiallyWrongPath[1] == ':')
-	{
-		return FALSE;
-	}
-
-	if (lenght >= 3)
-	{
-		if (PotentiallyWrongPath[1] == ':' && PotentiallyWrongPath[2] == '\\')
-		{
-			if (strstr(PotentiallyWrongPath, "C:\\Program Files"))
-			{
-				auto dumbHardcodedPath = "C:\\Program Files\\Techland\\Bloodline\\";
-				if (strstr(PotentiallyWrongPath, dumbHardcodedPath ))
-				{
-					auto dumbHardcodedPathLenght = strlen(dumbHardcodedPath);
-					strcpy_s((char*)PotentiallyWrongPath, lenght, &PotentiallyWrongPath[dumbHardcodedPathLenght]);
-					return TRUE;
-				}
-				else
-					return FALSE;
-			}
-		}
-		return FALSE;
-	}
-	return TRUE;
-}
-
-static BOOL(__stdcall* TrueCreateDirectoryA)(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes) = CreateDirectoryA;
-BOOL DetourCreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
-{
-	if (fixRetardedPaths(lpPathName))
-	{
-		return TrueCreateDirectoryA(lpPathName, lpSecurityAttributes);
-	}
-	return TRUE;
-}
 #pragma endregion
 
 
@@ -132,8 +83,11 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 		DetourAttach(&(PVOID&)TrueWindowFromPoint, DetourWindowFromPoint);
-		if (configReader.ReadBoolean("MAIN", "RestrictFolderCreation", true))
-			DetourAttach(&(PVOID&)TrueCreateDirectoryA, DetourCreateDirectoryA);
+		if (configReader.ReadBoolean("MAIN", "TryAndFixGarbageFolders", false) && bl::IsAtPreferredBase())
+		{
+			Hook(0x5E9D7D, (void *)&BlInitPaths_Fixed, 8);
+		}
+				
 		if (configReader.ReadBoolean("MAIN", "SuppressChangeDisplaySettings", false))
 			DetourAttach(&(PVOID&)TrueChangeDisplaySettings, DetourChangeDisplaySettings);
 		DetourTransactionCommit();

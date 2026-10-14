@@ -13,9 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Fixes">
+      <UniqueIdentifier>{0bc776e3-297c-41fe-9b06-7231852ed2de}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dinput8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FixPaths.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -28,6 +34,9 @@
     </ClInclude>
     <ClInclude Include="dinput8.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FixPaths.h">
+      <Filter>Header Files\Fixes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
