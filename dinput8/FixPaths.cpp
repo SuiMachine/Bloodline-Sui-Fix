@@ -67,21 +67,19 @@ namespace {
 } // namespace
 
 // ============================================================================
-// bl::Install
+// FixPaths::Install
 // ============================================================================
-namespace bl {
-    bool Install()
-    {
-        if ((uintptr_t)GetModuleHandleA(nullptr) != BL_PREFERRED_BASE)
-            return false;               // image relocated; absolute VA invalid
+bool FixPaths::Install()
+{
+    if ((uintptr_t)GetModuleHandleA(nullptr) != BL_PREFERRED_BASE)
+        return false;               // image relocated; absolute VA invalid
 
-        // 8 bytes so the patch ends on an instruction boundary (5 would
-        // split "B8 A0 19 00 00" at 0x5E9D80). BlInitPaths_Fixed fully
-        // reimplements the original, so no trampoline is needed.
-        Hook(VA_INITPATHS, (void *)&BlInitPaths_Fixed, HOOK_OVERRIDE_LEN);
-        return true;
-    }
-} // namespace bl
+    // 8 bytes so the patch ends on an instruction boundary (5 would
+    // split "B8 A0 19 00 00" at 0x5E9D80). BlInitPaths_Fixed fully
+    // reimplements the original, so no trampoline is needed.
+    Hook(VA_INITPATHS, (void *)&BlInitPaths_Fixed, HOOK_OVERRIDE_LEN);
+    return true;
+}
 
 // ============================================================================
 // The detour — mirrors the original at 0x5E9D7D instruction for instruction,

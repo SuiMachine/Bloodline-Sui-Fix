@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================================
-// BloodlineInitFix.h
+// FixPaths.h
 //
 // Replacement for Bloodline.exe!CTEGameParam::initPaths  (VA 0x5E9D7D, x86).
 //
@@ -30,12 +30,15 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-namespace bl {
-
+// Stateless installer for the initPaths detour above.
+class FixPaths
+{
+public:
     // Detour initPaths to BlInitPaths_Fixed. Returns false and patches
     // nothing unless the exe is loaded at its preferred base 0x400000
     // (2005 build without /DYNAMICBASE), where the absolute VA is valid.
-    bool Install();
+    static bool Install();
 
-} // namespace bl
+    FixPaths() = delete;   // static-only: no state, no instances
+};
 #endif

@@ -85,7 +85,7 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		DetourUpdateThread(GetCurrentThread());
 		DetourAttach(&(PVOID&)TrueWindowFromPoint, DetourWindowFromPoint);
 		if (configReader.ReadBoolean("MAIN", "TryFixGarbageFolderCreation", false))
-			bl::Install();
+			FixPaths::Install();
 		if (configReader.ReadBoolean("MAIN", "CacheResourceLoading", false))
 			LoadCaching::Instance().Install();
 		if (configReader.ReadBoolean("MAIN", "SuppressChangeDisplaySettings", false))
