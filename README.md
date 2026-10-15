@@ -3,7 +3,7 @@ A basic fix to the god awful window handling in Bloodline (2004/2005 Czech video
 
 ![wtf.png](/wtf.png)
 
-Eventually with a help of GLM 5.3, I have added a part of hooks for ini initialization, that was responsible for creating garbage folders all over your drive due to incorrect null string termination and asset path caching - I have verified the generated code to the best of my ability.
+Eventually with help of GLM 5.3, I have added a part of hooks for ini initialization, that was responsible for creating garbage folders all over your drive due to incorrect null string termination and asset path caching - I have verified the generated code to the best of my ability.
 
 Requirements
 ----
