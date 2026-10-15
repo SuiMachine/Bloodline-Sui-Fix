@@ -13,7 +13,6 @@
 // globals written, same trailing-backslash string formats).
 // ============================================================================
 #include <windows.h>
-#include "hookFunctions.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,9 +32,10 @@ extern "C" {
 #ifdef __cplusplus
 namespace bl {
 
-    // The exe is a 2005 build without /DYNAMICBASE and loads at its preferred
-    // ImageBase 0x400000. Verify before installing any hook.
-    bool IsAtPreferredBase();
+    // Detour initPaths to BlInitPaths_Fixed. Returns false and patches
+    // nothing unless the exe is loaded at its preferred base 0x400000
+    // (2005 build without /DYNAMICBASE), where the absolute VA is valid.
+    bool Install();
 
 } // namespace bl
 #endif

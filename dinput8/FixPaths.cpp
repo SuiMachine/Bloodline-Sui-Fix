@@ -1,4 +1,5 @@
 #include "FixPaths.h"
+#include "hookFunctions.h"
 
 // ============================================================================
 // Internals
@@ -6,6 +7,8 @@
 namespace {
 
     constexpr uintptr_t BL_PREFERRED_BASE = 0x400000;
+    constexpr uintptr_t VA_INITPATHS     = 0x5E9D7D;   // CTEGameParam::initPaths (hook target)
+    constexpr int      HOOK_OVERRIDE_LEN = 8;          // whole instructions (see Install)
 
     // ---- image offsets (VA at preferred base 0x400000) ----
     constexpr uintptr_t VA_GLOBAL_GAMEPARAM = 0x743D40;  // CTEGameParam*
@@ -64,12 +67,19 @@ namespace {
 } // namespace
 
 // ============================================================================
-// bl::IsAtPreferredBase
+// bl::Install
 // ============================================================================
 namespace bl {
-    bool IsAtPreferredBase()
+    bool Install()
     {
-        return (uintptr_t)GetModuleHandleA(nullptr) == BL_PREFERRED_BASE;
+        if ((uintptr_t)GetModuleHandleA(nullptr) != BL_PREFERRED_BASE)
+            return false;               // image relocated; absolute VA invalid
+
+        // 8 bytes so the patch ends on an instruction boundary (5 would
+        // split "B8 A0 19 00 00" at 0x5E9D80). BlInitPaths_Fixed fully
+        // reimplements the original, so no trampoline is needed.
+        Hook(VA_INITPATHS, (void *)&BlInitPaths_Fixed, HOOK_OVERRIDE_LEN);
+        return true;
     }
 } // namespace bl
 
