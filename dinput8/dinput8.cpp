@@ -1,6 +1,7 @@
 #include "dinput8.h"
 #include <detours.h>
 #include "FixPaths.h"
+#include "LoadCaching.h"
 
 //Global Variables
 int bWidth = 1024;
@@ -83,11 +84,10 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 		DetourAttach(&(PVOID&)TrueWindowFromPoint, DetourWindowFromPoint);
-		if (configReader.ReadBoolean("MAIN", "TryAndFixGarbageFolders", false) && bl::IsAtPreferredBase())
-		{
+		if (configReader.ReadBoolean("MAIN", "TryFixGarbageFolderCreation", false) && bl::IsAtPreferredBase())
 			Hook(0x5E9D7D, (void *)&BlInitPaths_Fixed, 8);
-		}
-				
+		if (configReader.ReadBoolean("MAIN", "CacheResourceLoading", false))
+			LoadCaching::Instance().Install();
 		if (configReader.ReadBoolean("MAIN", "SuppressChangeDisplaySettings", false))
 			DetourAttach(&(PVOID&)TrueChangeDisplaySettings, DetourChangeDisplaySettings);
 		DetourTransactionCommit();

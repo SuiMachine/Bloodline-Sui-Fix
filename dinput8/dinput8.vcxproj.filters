@@ -16,13 +16,19 @@
     <Filter Include="Header Files\Fixes">
       <UniqueIdentifier>{0bc776e3-297c-41fe-9b06-7231852ed2de}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Fixes">
+      <UniqueIdentifier>{b0b24496-3d71-43f8-a5cd-a6e1b8f4e9f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dinput8.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FixPaths.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadCaching.cpp">
+      <Filter>Source Files\Fixes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -36,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FixPaths.h">
+      <Filter>Header Files\Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadCaching.h">
       <Filter>Header Files\Fixes</Filter>
     </ClInclude>
   </ItemGroup>
