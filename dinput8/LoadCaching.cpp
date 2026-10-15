@@ -100,8 +100,7 @@ int LoadCaching::Resolve(char *name, char *outDir, int type)
         if (m_trace)
         {
             char msg[512];
-            wsprintfA(msg, "[BlResolver] HIT  %s -> %s (ret=%d)\n",
-                o.nameAfter.c_str(), o.outDir.c_str(), o.ret);
+            wsprintfA(msg, "[LoadCaching] HIT  %s -> %s (ret=%d)\n", o.nameAfter.c_str(), o.outDir.c_str(), o.ret);
             OutputDebugStringA(msg);
         }
         return o.ret;
@@ -115,18 +114,17 @@ int LoadCaching::Resolve(char *name, char *outDir, int type)
     Outcome o;
     o.ret = ret;
     o.outDir = outDir;               // post-call state, verbatim
-    o.nameAfter = name;                 // post-mutation, verbatim
-
-    EnterCriticalSection(&m_lock);
-    m_cache.emplace(std::move(key), std::move(o));
-    LeaveCriticalSection(&m_lock);
+    o.nameAfter = name;              // post-mutation, verbatim
 
     if (m_trace)
     {
         char msg[512];
-        wsprintfA(msg, "[BlResolver] MISS %s -> %s (ret=%d)\n",
-            o.nameAfter.c_str(), o.outDir.c_str(), o.ret);
+        wsprintfA(msg, "[LoadCaching] MISS %s -> %s (ret=%d)\n", o.nameAfter.c_str(), o.outDir.c_str(), o.ret);
         OutputDebugStringA(msg);
     }
+
+    EnterCriticalSection(&m_lock);
+    m_cache.emplace(std::move(key), std::move(o));
+    LeaveCriticalSection(&m_lock);
     return ret;
 }
