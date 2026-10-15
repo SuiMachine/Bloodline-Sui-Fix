@@ -1,7 +1,9 @@
 # Bloodline - Sui's fix
-A basic fix to the god awful window handling in Bloodline (2004/2005 Czech video game), which essentially was bugging out explorer.exe. Also added added an ability to override aspect ratio for camera.
+A basic fix to the god awful window handling in Bloodline (2004/2005 Czech video game), which essentially was bugging out explorer.exe. I have also added an ability to override aspect ratio for camera.
 
 ![wtf.png](/wtf.png)
+
+Eventually with a help of GLM 5.3, I have added a part of hooks for ini initialization, that was responsible for creating garbage folders all over your drive due to incorrect null string termination and asset path caching - I have verified the generated code to the best of my ability.
 
 Requirements
 ----
@@ -10,10 +12,3 @@ Requirements
 Notes
 ----
 * Tested only with Polish release of the game.
-* Do not use "**RestrictFolderCreation**" option in combination with "**Unofficial patch**" for the game.
-* If the game crashes - try disabling "**RestrictFolderCreation**" or "**SuppressChangeDisplaySettings**".
-
-Warning
-----
-* **Do not by any means run** this game with elevated privileges (that means **no "run as administrator"** and **no running this game in compatibility mode with Windows 95/98/Me/XP**).
-* 
