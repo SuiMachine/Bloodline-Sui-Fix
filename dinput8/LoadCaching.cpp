@@ -62,7 +62,7 @@ int LoadCaching::Resolve(char *name, char *outDir, int type)
     // of Install) — fail loudly rather than fake a result.
     if (!m_installed || !m_original)
     {
-        OutputDebugStringA("[BlResolver] Resolve called before Install!\n");
+        OutputDebugStringA("[LoadCaching] Resolve called before Install!\n");
         return 0;
     }
     if (!name || !outDir)
