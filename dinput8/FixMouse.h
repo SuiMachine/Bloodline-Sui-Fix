@@ -24,6 +24,10 @@
 //     value = pow(|delta| / dt * REF / 80.0, 1.5) * 50000.0 / REF
 // with REF = 1000/60 ms, which is bit-identical to the original at a steady
 // 60 fps and frame-rate-independent everywhere else.
+//
+// Sensitivity: Install(sensitivity) stores a linear multiplier that is
+// applied to the axis responses AFTER the response curve, so it scales the
+// look speed without changing the curve's shape (1.0 = original behavior).
 // ============================================================================
 #include <windows.h>
 
@@ -49,7 +53,12 @@ public:
     // patches nothing unless the exe is loaded at its preferred base
     // 0x400000 (2005 build without /DYNAMICBASE), where the absolute VA
     // is valid.
-    static bool Install();
+    //
+    // sensitivity: linear axis-response multiplier used by the detour
+    // (must be called before the detour can ever run, i.e. before the
+    // game's first CMouse::update). Non-positive values are ignored and
+    // 1.0 is used instead.
+    static bool Install(double sensitivity = 1.0);
 
     FixMouse() = delete;   // static-only: no state, no instances
 };

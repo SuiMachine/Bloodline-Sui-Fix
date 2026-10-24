@@ -88,7 +88,10 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		if (configReader.ReadBoolean("MAIN", "TryFixGarbageFolderCreation", false))
 			FixPaths::Install();
 		if (configReader.ReadBoolean("MAIN", "FixCameraRotationSpeed", false))
-			FixMouse::Install();
+		{
+			float mouseSensitivity = configReader.ReadFloat("MAIN", "MouseSensitivity", 1.0f);
+			FixMouse::Install(mouseSensitivity);
+		}
 		if (configReader.ReadBoolean("MAIN", "CacheResourceLoading", false))
 		{
 			if (LoadCaching::Instance().Install())

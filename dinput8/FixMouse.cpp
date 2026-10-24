@@ -46,13 +46,20 @@ namespace {
     typedef void(__fastcall *MouseUpdate_t)(void *self, int edxUnused, double dt);
     MouseUpdate_t TrueMouseUpdate = nullptr;
 
+    // Linear axis-response multiplier set by Install(); the detour runs in
+    // this translation unit, so a plain static beats plumbing it through
+    // the fixed __fastcall signature the game calls.
+    double g_sensitivity = 1.0;
+
 } // namespace
 
 // ============================================================================
 // FixMouse::Install
 // ============================================================================
-bool FixMouse::Install()
+bool FixMouse::Install(double sensitivity)
 {
+    g_sensitivity = min(max(sensitivity, 0.0001f), 5.f) * 0.1f;
+
     if (TrueMouseUpdate)
         return true;
     if ((uintptr_t)GetModuleHandleA(nullptr) != BL_PREFERRED_BASE)
@@ -119,9 +126,11 @@ extern "C" void __fastcall BlMouseUpdate_Fixed(void *self, int edxUnused, double
 
         // THE FIX: normalize the per-frame count to a per-millisecond rate
         // before applying the response curve, so the response depends on
-        // hand speed only. Bit-identical to the original at 60 fps.
+        // hand speed only. Bit-identical to the original at 60 fps with
+        // g_sensitivity == 1.0; the sensitivity scales the result linearly
+        // (after the curve, so it does not reshape it).
         const double countsPerMs = (double)delta / dt;
         a->value = pow(fabs(countsPerMs) * REF_FRAME_MS / CURVE_SCALE, CURVE_EXP)
-                   * CURVE_GAIN / REF_FRAME_MS;
+                   * CURVE_GAIN / REF_FRAME_MS * g_sensitivity;
     }
 }
