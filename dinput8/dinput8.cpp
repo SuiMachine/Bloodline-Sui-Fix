@@ -1,6 +1,7 @@
 #include "dinput8.h"
 #include <detours.h>
 #include "FixPaths.h"
+#include "FixMouse.h"
 #include "LoadCaching.h"
 
 //Global Variables
@@ -86,6 +87,8 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		DetourAttach(&(PVOID&)TrueWindowFromPoint, DetourWindowFromPoint);
 		if (configReader.ReadBoolean("MAIN", "TryFixGarbageFolderCreation", false))
 			FixPaths::Install();
+		if (configReader.ReadBoolean("MAIN", "FixCameraRotationSpeed", false))
+			FixMouse::Install();
 		if (configReader.ReadBoolean("MAIN", "CacheResourceLoading", false))
 		{
 			if (LoadCaching::Instance().Install())

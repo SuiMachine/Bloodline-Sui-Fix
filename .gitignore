@@ -36,6 +36,8 @@
 Debug/
 dinput8/Debug
 dinput8/Release
+dinput8/dinput8/*
+
 
 # Archives
 *.zip
@@ -44,4 +46,7 @@ dinput8/Release
 
 # No 7zip
 Release/7za.exe
+
+# Mistral's Python scripts
+scratch/*
 

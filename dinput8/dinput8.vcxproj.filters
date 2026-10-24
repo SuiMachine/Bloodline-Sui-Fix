@@ -27,6 +27,9 @@
     <ClCompile Include="FixPaths.cpp">
       <Filter>Source Files\Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="FixMouse.cpp">
+      <Filter>Source Files\Fixes</Filter>
+    </ClCompile>
     <ClCompile Include="LoadCaching.cpp">
       <Filter>Source Files\Fixes</Filter>
     </ClCompile>
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FixPaths.h">
+      <Filter>Header Files\Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="FixMouse.h">
       <Filter>Header Files\Fixes</Filter>
     </ClInclude>
     <ClInclude Include="LoadCaching.h">
