@@ -22,6 +22,7 @@
     <ClCompile Include="dinput8.cpp" />
     <ClCompile Include="FixMouse.cpp" />
     <ClCompile Include="FixAltTab.cpp" />
+    <ClCompile Include="FixGamma.cpp" />
     <ClCompile Include="FixPaths.cpp" />
     <ClCompile Include="LoadCaching.cpp" />
   </ItemGroup>
@@ -29,6 +30,7 @@
     <ClInclude Include="dinput8.h" />
     <ClInclude Include="FixMouse.h" />
     <ClInclude Include="FixAltTab.h" />
+    <ClInclude Include="FixGamma.h" />
     <ClInclude Include="FixPaths.h" />
     <ClInclude Include="hookFunctions.h" />
     <ClInclude Include="LoadCaching.h" />
@@ -120,7 +122,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>dinput8.def</ModuleDefinitionFile>
-      <AdditionalDependencies>detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -154,7 +156,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>dinput8.def</ModuleDefinitionFile>
-      <AdditionalDependencies>detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>cd ../Release

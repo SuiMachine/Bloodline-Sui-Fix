@@ -56,6 +56,9 @@
     <ClInclude Include="FixAltTab.h">
       <Filter>Header Files\Fixes</Filter>
     </ClInclude>
+    <ClInclude Include="FixGamma.h">
+      <Filter>Header Files\Fixes</Filter>
+    </ClInclude>
     <ClInclude Include="LoadCaching.h">
       <Filter>Header Files\Fixes</Filter>
     </ClInclude>
