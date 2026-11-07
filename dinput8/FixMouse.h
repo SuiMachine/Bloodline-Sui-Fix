@@ -60,6 +60,13 @@ extern "C" {
     // by the original's `ret 8`.
     void __fastcall BlMouseUpdate_Fixed(void *self, int edxUnused, double dt);
 
+    // Detour for the game's dialog-set-open setter (VA 0x5D8D62): tracks
+    // how many dialog objects currently report "open" (a 1 byte at
+    // this->+0), which suppresses the mouse axis responses while menus
+    // are up. Same calling convention family: this in ECX, the bool on
+    // the stack (original `ret 4`).
+    void __fastcall BlMenuSetOpen_Fixed(void *self, int edxUnused, BYTE open);
+
 #ifdef __cplusplus
 }
 #endif
@@ -79,7 +86,8 @@ public:
     // game's first CMouse::update). Non-positive values are ignored and
     // 1.0 is used instead.
     static bool Install(double sensitivity = 1.0,
-                         bool gateWhenUnfocused = true);
+                         bool gateWhenUnfocused = true,
+                         bool trace = false);
 
     FixMouse() = delete;   // static-only: no state, no instances
 };

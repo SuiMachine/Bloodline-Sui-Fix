@@ -113,12 +113,18 @@ namespace {
         fclose(f);
     }
 
-    // ---- Menu-path frame-time recovery ------------------------------------
-    // The in-game menu loop is the one caller of the device-update
-    // dispatcher (VA 0x426FB0) that does NOT pass a real frame time: it
-    // pushes a synthetic double 1.0 (VA 0x5F16DD). See the detour below.
+    // ---- Inter-call timing ---------------------------------------------------
+    // Used by the synthetic-dt recovery in the detour below. A GUI-side
+    // loop (VA 0x5F16DD, exact purpose unidentified) is the one caller of
+    // the device-update dispatcher that passes a synthetic double 1.0
+    // instead of a real frame time; without the recovery the per-ms
+    // normalization would amplify its responses by (gap/1.0)^1.5.
     double g_qpcToMs    = 0.0;   // QPC ticks -> ms, filled on first call
     double g_lastCallMs = -1.0; // QPC time of the previous detour call
+
+    // Whether to append the dt/gap/dx polling diagnostics to the log
+    // (FixCameraRotationSpeedTrace). Off in normal play.
+    bool g_traceEnabled = false;
 
     double QpcNowMs()
     {
@@ -135,15 +141,34 @@ namespace {
         return (double)now.QuadPart * g_qpcToMs;
     }
 
+    // ---- Menu-state interception -------------------------------------------
+    // Dialog objects carry a "menu open" byte at +0, written by the setter
+    // at VA 0x5D8D62 (__fastcall (this, bool open), ret 4 — verified).
+    // Menu-open paths pass 1, close paths 0; the holder objects live in
+    // per-dialog containers, so there is no single static flag to read.
+    // Instead the setter is detoured and the number of currently-open
+    // dialogs is counted, which stays correct for nested menus. The first
+    // 5 bytes (push ebp | mov ebp,esp | push -1) are position-independent,
+    // so the same flat-copy trampoline as the mouse hook applies.
+    constexpr uintptr_t VA_MENU_SET_OPEN = 0x5D8D62;
+    constexpr int      MENU_HOOK_LEN     = 5;
+
+    typedef void(__fastcall *MenuSetOpen_t)(void *self, int edxUnused, BYTE open);
+    MenuSetOpen_t TrueMenuSetOpen = nullptr;
+
+    // Number of dialog objects whose flag byte is currently 1.
+    int g_menuOpenCount = 0;
+
 } // namespace
 
 // ============================================================================
 // FixMouse::Install
 // ============================================================================
-bool FixMouse::Install(double sensitivity, bool gateWhenUnfocused)
+bool FixMouse::Install(double sensitivity, bool gateWhenUnfocused, bool trace)
 {
     g_sensitivity = min(max(sensitivity, 0.0001f), 5.f) * 0.1f;
     g_gateEnabled  = gateWhenUnfocused;
+    g_traceEnabled = trace;
 
     if (TrueMouseUpdate)
         return true;
@@ -166,7 +191,43 @@ bool FixMouse::Install(double sensitivity, bool gateWhenUnfocused)
 
     TrueMouseUpdate = (MouseUpdate_t)trampoline;
     Hook(VA_MOUSE_UPDATE, (void *)&BlMouseUpdate_Fixed, HOOK_OVERRIDE_LEN);
+
+    // Menu-state setter detour. Best effort: the mouse fix stays fully
+    // functional without it, only the menu suppression goes quiet.
+    BYTE *const menuTramp = (BYTE *)VirtualAlloc(nullptr,
+        MENU_HOOK_LEN + 5, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (menuTramp)
+    {
+        CopyMemory(menuTramp, (void *)VA_MENU_SET_OPEN, MENU_HOOK_LEN);
+        menuTramp[MENU_HOOK_LEN] = 0xE9;   // jmp VA_MENU_SET_OPEN + MENU_HOOK_LEN
+        *(DWORD *)(menuTramp + MENU_HOOK_LEN + 1) =
+            (DWORD)(VA_MENU_SET_OPEN + MENU_HOOK_LEN) - (DWORD)(menuTramp + MENU_HOOK_LEN + 5);
+        TrueMenuSetOpen = (MenuSetOpen_t)menuTramp;
+        Hook(VA_MENU_SET_OPEN, (void *)&BlMenuSetOpen_Fixed, MENU_HOOK_LEN);
+    }
     return true;
+}
+
+// ============================================================================
+// The menu-state setter detour — tracks how many dialogs report "open".
+// The original runs unchanged; only the transition of this->+0 adjusts
+// the open count. The dialog object must be valid for the original's own
+// first instruction (it writes to it), so the pre-read needs no guard.
+// ============================================================================
+extern "C" void __fastcall BlMenuSetOpen_Fixed(void *self, int edxUnused, BYTE open)
+{
+    const BYTE was = (self != nullptr) ? *(const BYTE *)self : 0;
+
+    TrueMenuSetOpen(self, edxUnused, open);
+
+    if (self == nullptr)
+        return;
+    if (was == 0 && open)
+        ++g_menuOpenCount;
+    else if (was != 0 && !open)
+        --g_menuOpenCount;
+    if (g_menuOpenCount < 0)
+        g_menuOpenCount = 0;   // object recycled behind our back: resync sanely
 }
 
 // ============================================================================
@@ -307,19 +368,12 @@ extern "C" void __fastcall BlMouseUpdate_Fixed(void *self, int edxUnused, double
     if (nowMs >= 0.0)
         g_lastCallMs = nowMs;
 
-    // ---- TEMP DIAGNOSTICS (in-game menu investigation) ----------------------
-    // At most ~4 lines/sec, via printf and OutputDebugStringA (VS Output
-    // window): the dt the caller claimed, the REAL gap since the previous
-    // update call (QPC), the raw X delta this poll returned, and the
-    // response the original just stored. Healthy = gap == dt == one frame.
-    // How they diverge while the menu is open decides the fix:
-    //   gap >> dt            counts accumulate between polls but the caller
-    //                        still claims a frame-scale dt -> normalize by
-    //                        the measured gap (dtForRate = max(dt, gap)).
-    //   dt ~= gap >> frame   dt honestly covers the polling interval; the
-    //                        amplification is on the consumer side.
-    //   dt growing, gap ~ frame  the caller's clock itself is broken in
-    //                        menu; trust the gap and note the growth law.
+    // ---- POLL DIAGNOSTICS (FixCameraRotationSpeedTrace) ----------------------
+    // At most ~4 lines/sec into the log next to the DLL: the dt the caller
+    // claimed, the REAL gap since the previous update call (QPC), the raw
+    // X delta of this poll and the response the original just stored.
+    // Healthy = gap == dt == one frame. Off in normal play.
+    if (g_traceEnabled)
     {
         static double s_nextLogMs = -1.0;
 
@@ -339,6 +393,40 @@ extern "C" void __fastcall BlMouseUpdate_Fixed(void *self, int edxUnused, double
             printf("%s", buf);
             OutputDebugStringA(buf);
             LogLine(buf);
+        }
+    }
+
+    // MENU SUPPRESSION: while any dialog reports open, zero all action
+    // responses — the world camera must not turn behind menus (the
+    // "menu spin": the response curve saturates on wide sweep motions and
+    // GetActionFloat pins the camera at maximum turn speed). Menu UI
+    // input does not flow through this device's actions (verified with
+    // the getter tracepoints: while a menu is open the only GetActionFloat
+    // readers of these actions are the camera consumers), so suppressing
+    // here affects nothing but the camera leak-through.
+    {
+        static bool s_lastMenuOpen = false;
+
+        const bool menuOpen = (g_menuOpenCount > 0);
+        if (menuOpen != s_lastMenuOpen)
+        {
+            s_lastMenuOpen = menuOpen;
+            char msg[96];
+            sprintf_s(msg, sizeof(msg),
+                      menuOpen ? "FixMouse: MENU OPEN (count=%d) - responses suppressed\n"
+                               : "FixMouse: MENU CLOSED - responses live\n",
+                      g_menuOpenCount);
+            printf("%s", msg);
+            OutputDebugStringA(msg);
+            LogLine(msg);
+        }
+
+        if (menuOpen)
+        {
+            MouseAction *const quiet = (MouseAction *)self;
+            for (int i = 0; i < ACTION_COUNT; ++i)
+                quiet[i].value = 0.0;
+            return;
         }
     }
 

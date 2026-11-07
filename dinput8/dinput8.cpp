@@ -91,8 +91,9 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		const bool allowAltTab = configReader.ReadBoolean("MAIN", "AllowAltTab", false);
 		if (configReader.ReadBoolean("MAIN", "FixCameraRotationSpeed", false) || allowAltTab)
 		{
-			float mouseSensitivity = configReader.ReadFloat("MAIN", "MouseSensitivity", 1.0f);
-			FixMouse::Install(mouseSensitivity, allowAltTab);
+			FixMouse::Install(configReader.ReadFloat("MAIN", "MouseSensitivity", 1.0f),
+			                  allowAltTab,
+			                  configReader.ReadBoolean("MAIN", "FixCameraRotationSpeedTrace", false));
 		}
 		if (allowAltTab)
 			FixAltTab::Install(configReader.ReadBoolean("MAIN", "NonExclusiveMouse", false));
