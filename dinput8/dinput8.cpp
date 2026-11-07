@@ -2,6 +2,7 @@
 #include <detours.h>
 #include "FixPaths.h"
 #include "FixMouse.h"
+#include "FixAltTab.h"
 #include "LoadCaching.h"
 
 //Global Variables
@@ -87,11 +88,14 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		DetourAttach(&(PVOID&)TrueWindowFromPoint, DetourWindowFromPoint);
 		if (configReader.ReadBoolean("MAIN", "TryFixGarbageFolderCreation", false))
 			FixPaths::Install();
-		if (configReader.ReadBoolean("MAIN", "FixCameraRotationSpeed", false))
+		const bool allowAltTab = configReader.ReadBoolean("MAIN", "AllowAltTab", false);
+		if (configReader.ReadBoolean("MAIN", "FixCameraRotationSpeed", false) || allowAltTab)
 		{
 			float mouseSensitivity = configReader.ReadFloat("MAIN", "MouseSensitivity", 1.0f);
-			FixMouse::Install(mouseSensitivity);
+			FixMouse::Install(mouseSensitivity, allowAltTab);
 		}
+		if (allowAltTab)
+			FixAltTab::Install(configReader.ReadBoolean("MAIN", "NonExclusiveMouse", false));
 		if (configReader.ReadBoolean("MAIN", "CacheResourceLoading", false))
 		{
 			if (LoadCaching::Instance().Install())

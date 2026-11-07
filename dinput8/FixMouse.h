@@ -28,6 +28,26 @@
 // Sensitivity: Install(sensitivity) stores a linear multiplier that is
 // applied to the axis responses AFTER the response curve, so it scales the
 // look speed without changing the curve's shape (1.0 = original behavior).
+//
+// Menu: the in-game menu loop is the one caller of the device-update
+// dispatcher that passes a synthetic dt of exactly 1.0 ms (VA 0x5F16DD)
+// instead of a real frame time. The detour detects that value and
+// substitutes the measured elapsed time between calls for the rate
+// normalization, so the camera visible behind the menu tracks at the same
+// speed as gameplay instead of ~68x faster.
+//
+// Focus gate (runs while [MAIN] AllowAltTab is set): the game's mouse
+// device is bound, via its DirectInput cooperative level, to the game's
+// invisible internal root window — not the rendered surface. Foreground-
+// cooperative devices only stay acquired while THAT window is foreground.
+// Vanilla kept it there by stealing focus in its window procedure on
+// every message (which made ALT+TAB impossible); FixAltTab's patch kills
+// the steal, and this detour restores its load-bearing half: while the
+// game process owns the foreground, the root window is promoted back on
+// every poll; while another process has the foreground (alt-tab, a
+// debugger session), every action response is zeroed so nothing leaks
+// through. Focus transitions are appended to dinput8_fixmouse.log next
+// to the DLL, naming whichever window holds the foreground.
 // ============================================================================
 #include <windows.h>
 
@@ -58,7 +78,8 @@ public:
     // (must be called before the detour can ever run, i.e. before the
     // game's first CMouse::update). Non-positive values are ignored and
     // 1.0 is used instead.
-    static bool Install(double sensitivity = 1.0);
+    static bool Install(double sensitivity = 1.0,
+                         bool gateWhenUnfocused = true);
 
     FixMouse() = delete;   // static-only: no state, no instances
 };
