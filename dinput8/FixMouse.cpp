@@ -354,12 +354,16 @@ extern "C" void __fastcall BlMouseUpdate_Fixed(void *self, int edxUnused, double
         }
     }
 
-    // NOTE: a "rescue" Acquire() of the mouse device was tried here and
-    // REMOVED: calling into the DirectInput device from inside the detour
-    // at an arbitrary poll crashed the process at startup (no debugger)
-    // and left the device permanently dead under one. The click-death bug
-    // (device unacquired by a click, never recovered by the game) is
-    // still open; any retry must be evidence-gated and opt-in.
+    // NOTE on the "click death" bug (mouse device unacquired by a click in
+    // the game window, never recovered by the game): resolved by the root
+    // promotion above — a click moved the foreground onto the visible
+    // surface (unacquiring the DirectInput mouse bound to the root
+    // window); the promotion puts the root window back within one poll,
+    // and the game's own poll retry re-acquires the device. A direct
+    // Acquire() "rescue" from inside this detour was tried earlier and
+    // is NOT the mechanism to bring back: calling into the DirectInput
+    // device at arbitrary poll moments crashed the process at startup
+    // without a debugger and left the device dead under one.
 
     // Timestamp the call so the menu case below can recover the real
     // frame length. prevMs is the previous call's time, whenever that was.
