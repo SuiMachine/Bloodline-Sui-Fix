@@ -101,9 +101,7 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		if (configReader.ReadBoolean("MAIN", "CacheResourceLoading", false))
 		{
 			if (LoadCaching::Instance().Install())
-			{
 				LoadCaching::Instance().SetTrace(configReader.ReadBoolean("MAIN", "CacheResourceLoadingTrace", false));
-			}
 		}
 		if (configReader.ReadBoolean("MAIN", "SuppressChangeDisplaySettings", false))
 			DetourAttach(&(PVOID&)TrueChangeDisplaySettings, DetourChangeDisplaySettings);
