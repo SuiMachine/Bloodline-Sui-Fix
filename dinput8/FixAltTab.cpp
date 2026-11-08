@@ -62,13 +62,12 @@ namespace {
 // ============================================================================
 // FixAltTab::Install
 // ============================================================================
-bool FixAltTab::Install(bool nonExclusiveMouse)
+bool FixAltTab::Install()
 {
     if ((uintptr_t)GetModuleHandleA(nullptr) != BL_PREFERRED_BASE)
         return false;                       // image relocated; absolute VA invalid
 
     const bool focusOk = BranchToJmp(VA_FOCUS_STEAL_JE, OPCODE_JE);
-    const bool coopOk  = !nonExclusiveMouse ||
-                        BranchToJmp(VA_EXCLUSIVE_JNZ, OPCODE_JNZ);
+    const bool coopOk  = BranchToJmp(VA_EXCLUSIVE_JNZ, OPCODE_JNZ);
     return focusOk && coopOk;
 }

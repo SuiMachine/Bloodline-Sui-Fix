@@ -32,10 +32,9 @@ class FixAltTab
 {
 public:
     // Focus-steal patch is applied unconditionally (when AllowAltTab is
-    // set); the non-exclusive-mouse patch only when nonExclusiveMouse is
-    // true. Returns false unless every requested patch was applied (or
+    // set); Returns false unless every requested patch was applied (or
     // was already applied: idempotent); refuses a foreign exe build.
-    static bool Install(bool nonExclusiveMouse = false);
+    static bool Install();
 
     FixAltTab() = delete;   // static-only: no state, no instances
 };

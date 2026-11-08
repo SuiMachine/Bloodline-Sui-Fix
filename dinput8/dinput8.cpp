@@ -97,7 +97,7 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			                  configReader.ReadBoolean("MAIN", "FixCameraRotationSpeedTrace", false));
 		}
 		if (allowAltTab)
-			FixAltTab::Install(configReader.ReadBoolean("MAIN", "NonExclusiveMouse", false));
+			FixAltTab::Install();
 		if (configReader.ReadBoolean("MAIN", "CacheResourceLoading", false))
 		{
 			if (LoadCaching::Instance().Install())
