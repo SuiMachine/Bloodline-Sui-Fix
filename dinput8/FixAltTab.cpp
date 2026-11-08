@@ -7,17 +7,6 @@ namespace {
 
     constexpr uintptr_t BL_PREFERRED_BASE = 0x400000;
 
-    // Patch 1 — cooperative level. The exclusive-input branch of
-    // CMouse::init:
-    //   0x42636D:  83 7D 10 01     cmp [ebp+0x10], 1
-    //   0x426371:  75 23           jnz  0x426396  -> push 6
-    //                                          (DISCL_NONEXCLUSIVE|FOREGROUND)
-    //   0x426373:  6A 05           push 5
-    //                                          (DISCL_EXCLUSIVE|FOREGROUND)
-    // The cmp/jnz/push sequence occurs exactly once in the image.
-    constexpr uintptr_t VA_EXCLUSIVE_JNZ = 0x426371;
-    constexpr BYTE      OPCODE_JNZ       = 0x75;
-
     // Patch 2 — the focus-steal loop. Prologue of the window procedure
     // (VA 0x409932), runs before dispatching EVERY message:
     //   0x40993F:  call GetForegroundWindow
@@ -68,6 +57,6 @@ bool FixAltTab::Install()
         return false;                       // image relocated; absolute VA invalid
 
     const bool focusOk = BranchToJmp(VA_FOCUS_STEAL_JE, OPCODE_JE);
-    const bool coopOk  = BranchToJmp(VA_EXCLUSIVE_JNZ, OPCODE_JNZ);
-    return focusOk && coopOk;
+
+    return focusOk;
 }
