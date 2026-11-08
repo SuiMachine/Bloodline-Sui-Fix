@@ -108,8 +108,7 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		if (configReader.ReadBoolean("MAIN", "SuppressChangeDisplaySettings", false))
 			DetourAttach(&(PVOID&)TrueChangeDisplaySettings, DetourChangeDisplaySettings);
 		const float gammaValue = configReader.ReadFloat("MAIN", "Gamma", 1.0f);
-		if (gammaValue > 0.0f && gammaValue != 1.0f)
-			FixGamma::Install(gammaValue);
+		FixGamma::Install(gammaValue > 0.0f ? gammaValue : 1.0f);
 		DetourTransactionCommit();
 
 		//LoadLibary

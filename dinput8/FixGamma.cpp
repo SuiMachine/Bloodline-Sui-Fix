@@ -206,11 +206,115 @@ namespace {
             while (glGetError() != GL_NO_ERROR) {}
     }
 
+    // ---- hotkey adjustment ---------------------------------------------------
+    // Shift + "+" (VK_OEM_PLUS, i.e. the unshifted "=" key, or the numpad
+    // VK_ADD) raises the gamma by 5%, Shift + "-" lowers it by 5%; the
+    // value is clamped to [0.3, 4.0] and written back to dinput8.ini so
+    // sessions stay consistent. Polled once per frame from the
+    // SwapBuffers detour; keys are edge-detected and ignored while
+    // another process owns the foreground.
+    bool   s_plusDown  = false;
+    bool   s_minusDown = false;
+    double s_gammaMin  = 0.30;
+    double s_gammaMax  = 4.00;
+
+    void LogGamma(const char *what)
+    {
+        char msg[96];
+        sprintf_s(msg, sizeof(msg), "FixGamma: %s -> %.3f\n", what, g_gamma);
+        printf("%s", msg);
+        OutputDebugStringA(msg);
+
+        static char s_path[MAX_PATH] = {};
+        if (!s_path[0])
+        {
+            HMODULE self = nullptr;
+            char dll[MAX_PATH];
+            if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                                    GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                    (LPCSTR)&LogGamma, &self) ||
+                !GetModuleFileNameA(self, dll, MAX_PATH))
+                return;
+            char *const slash = strrchr(dll, '\\');
+            if (!slash)
+                return;
+            *slash = '\0';
+            sprintf_s(s_path, sizeof(s_path), "%s\\dinput8_fixgamma.log", dll);
+        }
+        FILE *f = nullptr;
+        if (fopen_s(&f, s_path, "a") == 0 && f)
+        {
+            fwrite(msg, 1, strlen(msg), f);
+            fclose(f);
+        }
+    }
+
+    void PersistGamma()
+    {
+        char ini[MAX_PATH];
+        HMODULE self = nullptr;
+        if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                (LPCSTR)&PersistGamma, &self) ||
+            !GetModuleFileNameA(self, ini, MAX_PATH))
+            return;
+        char *const slash = strrchr(ini, '\\');
+        if (!slash)
+            return;
+        *slash = '\0';
+        strcat_s(ini, sizeof(ini), "\\dinput8.ini");
+
+        char val[32];
+        sprintf_s(val, sizeof(val), "%.3f", g_gamma);
+        WritePrivateProfileStringA("MAIN", "Gamma", val, ini);
+    }
+
+    void PollHotkeys()
+    {
+        DWORD fgPid = 0;
+        const HWND fg = GetForegroundWindow();
+        GetWindowThreadProcessId(fg, &fgPid);
+        if (fg == NULL || fgPid != GetCurrentProcessId())
+        {
+            s_plusDown = s_minusDown = false;   // no key state across focus
+            return;
+        }
+
+        if (!(GetAsyncKeyState(VK_SHIFT) & 0x8000))
+        {
+            s_plusDown = s_minusDown = false;
+            return;
+        }
+
+        const bool plus  = (GetAsyncKeyState(VK_OEM_PLUS)   & 0x8000) != 0 ||
+                           (GetAsyncKeyState(VK_ADD)       & 0x8000) != 0;
+        const bool minus = (GetAsyncKeyState(VK_OEM_MINUS) & 0x8000) != 0 ||
+                           (GetAsyncKeyState(VK_SUBTRACT) & 0x8000) != 0;
+
+        if (plus && !s_plusDown && g_gamma < s_gammaMax)
+        {
+            g_gamma = (g_gamma * 1.05 < s_gammaMax) ? g_gamma * 1.05 : s_gammaMax;
+            LogGamma("Shift++ pressed, gamma");
+            PersistGamma();
+        }
+        if (minus && !s_minusDown && g_gamma > s_gammaMin)
+        {
+            g_gamma = (g_gamma / 1.05 > s_gammaMin) ? g_gamma / 1.05 : s_gammaMin;
+            LogGamma("Shift+- pressed, gamma");
+            PersistGamma();
+        }
+
+        s_plusDown = plus;
+        s_minusDown = minus;
+    }
+
     BOOL (WINAPI *TrueSwapBuffers)(HDC hdc) = SwapBuffers;
 
     BOOL WINAPI DetourSwapBuffers(HDC hdc)
     {
-        GammaPass();
+        PollHotkeys();
+        if (g_gamma != 1.0)
+            GammaPass();
         return TrueSwapBuffers(hdc);
     }
 
