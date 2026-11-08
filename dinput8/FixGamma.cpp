@@ -218,37 +218,6 @@ namespace {
     double s_gammaMin  = 0.30;
     double s_gammaMax  = 4.00;
 
-    void LogGamma(const char *what)
-    {
-        char msg[96];
-        sprintf_s(msg, sizeof(msg), "FixGamma: %s -> %.3f\n", what, g_gamma);
-        printf("%s", msg);
-        OutputDebugStringA(msg);
-
-        static char s_path[MAX_PATH] = {};
-        if (!s_path[0])
-        {
-            HMODULE self = nullptr;
-            char dll[MAX_PATH];
-            if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                                    GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                                    (LPCSTR)&LogGamma, &self) ||
-                !GetModuleFileNameA(self, dll, MAX_PATH))
-                return;
-            char *const slash = strrchr(dll, '\\');
-            if (!slash)
-                return;
-            *slash = '\0';
-            sprintf_s(s_path, sizeof(s_path), "%s\\dinput8_fixgamma.log", dll);
-        }
-        FILE *f = nullptr;
-        if (fopen_s(&f, s_path, "a") == 0 && f)
-        {
-            fwrite(msg, 1, strlen(msg), f);
-            fclose(f);
-        }
-    }
-
     void PersistGamma()
     {
         char ini[MAX_PATH];
@@ -294,13 +263,11 @@ namespace {
         if (plus && !s_plusDown && g_gamma < s_gammaMax)
         {
             g_gamma = (g_gamma * 1.05 < s_gammaMax) ? g_gamma * 1.05 : s_gammaMax;
-            LogGamma("Shift++ pressed, gamma");
             PersistGamma();
         }
         if (minus && !s_minusDown && g_gamma > s_gammaMin)
         {
             g_gamma = (g_gamma / 1.05 > s_gammaMin) ? g_gamma / 1.05 : s_gammaMin;
-            LogGamma("Shift+- pressed, gamma");
             PersistGamma();
         }
 
