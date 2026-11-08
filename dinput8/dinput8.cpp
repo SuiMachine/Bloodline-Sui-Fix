@@ -1,6 +1,9 @@
 #include "dinput8.h"
 #include <detours.h>
 #include "FixPaths.h"
+#include "FixMouse.h"
+#include "FixAltTab.h"
+#include "FixGamma.h"
 #include "LoadCaching.h"
 
 //Global Variables
@@ -86,15 +89,24 @@ bool WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		DetourAttach(&(PVOID&)TrueWindowFromPoint, DetourWindowFromPoint);
 		if (configReader.ReadBoolean("MAIN", "TryFixGarbageFolderCreation", false))
 			FixPaths::Install();
+		const bool allowAltTab = configReader.ReadBoolean("MAIN", "AllowAltTab", false);
+		if (configReader.ReadBoolean("MAIN", "FixCameraRotationSpeed", false) || allowAltTab)
+		{
+			FixMouse::Install(configReader.ReadFloat("MAIN", "MouseSensitivity", 1.0f),
+			                  allowAltTab,
+			                  configReader.ReadBoolean("MAIN", "FixCameraRotationSpeedTrace", false));
+		}
+		if (allowAltTab)
+			FixAltTab::Install();
 		if (configReader.ReadBoolean("MAIN", "CacheResourceLoading", false))
 		{
 			if (LoadCaching::Instance().Install())
-			{
 				LoadCaching::Instance().SetTrace(configReader.ReadBoolean("MAIN", "CacheResourceLoadingTrace", false));
-			}
 		}
 		if (configReader.ReadBoolean("MAIN", "SuppressChangeDisplaySettings", false))
 			DetourAttach(&(PVOID&)TrueChangeDisplaySettings, DetourChangeDisplaySettings);
+		const float gammaValue = configReader.ReadFloat("MAIN", "Gamma", 1.0f);
+		FixGamma::Install(gammaValue > 0.0f ? gammaValue : 1.0f);
 		DetourTransactionCommit();
 
 		//LoadLibary
