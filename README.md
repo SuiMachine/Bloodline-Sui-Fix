@@ -25,3 +25,4 @@ Notes
 * Featured marked with <sup>AI assisted</sup> were - as the name implies - developed with AI assistance (most likely using GLM 5.3). Not all generated code was used as is.
 * Tested only with Polish release of the game.
 * The last level for whatever reason uses a significantly lower field of view. It's not something I am willing to look into.
+* The mouse may scroll windows that are not in focus. At this point - just use [DisplayLock](https://github.com/Stateford/Display-Lock).
